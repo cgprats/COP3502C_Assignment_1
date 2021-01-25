@@ -20,6 +20,25 @@ void dispose_trainer(trainer *delTrainer); //Destructor for Trainers
 int main() {
 	//Report Memory Leaks When the Program Exits
 	atexit(report_mem_leak);
+
+	//Set the Input File to ifp and the Output File to ofp. If There is an Error, Print It.
+	FILE *ifp, *ofp;
+	if ((ifp = fopen("cop3502-as1-input.txt", "r")) == NULL) {
+		fclose(ifp);
+		printf("Error: Opening Input File Failed!");
+		return 1;
+	}
+	if ((ofp = fopen("cop3502-as1-output-prats-christopher.txt", "w")) == NULL) {
+		fclose(ifp);
+		fclose(ofp);
+		printf("Error: Opening Output File Failed!");
+		return 1;
+	}
+
+	// Close the Input and Output Files Prior to Exit
+	fclose(ifp);
+	fclose(ofp);
+
 	return 0;
 }
 
