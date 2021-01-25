@@ -4,11 +4,14 @@
 #include <math.h>
 #include "sp21_cop3502_as1.h"
 #include "leak_detector_c.h"
+
 // Function Constructors
 void remove_crlf(char *s); //Remove Carriage Return.
 int get_next_nonblank_line(FILE *ifp, char *buf, int max_length); //Get the Next Nonblank Line from Buffer
 monster *new_monster(int id, char *name, char *element, int population); //Constructor for Monsters
+monster **new_monsters_array(FILE *ifp); //Constructor for an Array of Monsters Created from a File
 region *new_region(char *name, int nmonsters, int total_population, monster **monsters); //Constructor for Regions
+region **new_regions_array(FILE *ifp); //Constructor for an Array of Regions Created from a File
 itinerary *new_itinerary(int nregions, region **regions, int captures); //Constructor for Itineraries
 trainer *new_trainer(char *name, itinerary *visits); //Constructor for Trainers
 void dispose_monster(monster *delMonster); //Destructor for Monsters
@@ -34,6 +37,9 @@ int main() {
 		printf("Error: Opening Output File Failed!");
 		return 1;
 	}
+
+	//Create the Array of Monsters
+	monster **monsterArray = new_monsters_array(ifp);
 
 	// Close the Input and Output Files Prior to Exit
 	fclose(ifp);
@@ -106,16 +112,48 @@ int get_next_nonblank_line(FILE *ifp, char *buf, int max_length)
 monster *new_monster(int id, char *name, char *element, int population) {
 	monster *newMonster = malloc(sizeof(monster));
 	newMonster->id = id;
-	newMonster->name = name;
-	newMonster->element = element;
+	newMonster->name = strdup(name);
+	newMonster->element = strdup(element);
 	newMonster->population = population;
 	return newMonster;
+}
+
+// This Function will Create and Return an Array of Monsters from an Input File
+monster **new_monsters_array(FILE *ifp) {
+	//Get the Number of Monsters
+	char buf[256];
+	get_next_nonblank_line(ifp, buf, 255);
+	remove_crlf(buf);
+	int numMonsters = atoi(buf);
+
+	//Allocate the Array of Monsters with the Appropriate Size
+	monster **newMonsterArray = calloc(numMonsters, sizeof(monster *));
+
+	//Initialize the Array of Monsters
+	int tempID, tempPopulation;
+	char tempName[20], tempElement[20];
+	for (int i = 0; i < numMonsters; i++) {
+		//Read From Next Line into Buffer
+		get_next_nonblank_line(ifp, buf, 255);
+		remove_crlf(buf);
+
+		//Get and Set the Temporary Values
+		sscanf(buf, "%s %s %d", tempName, tempElement, &tempID);
+		tempID = i + 1;
+
+		//Create the Monster and Add it to the Array
+		monster *tempMonster = new_monster(tempID, tempName, tempElement, tempPopulation);
+		newMonsterArray[i] = tempMonster;
+	}
+	
+	//Return the Newly Created Array
+	return newMonsterArray;
 }
 
 // This Function will Create and Return a New Region from Specified Parameters.
 region *new_region(char *name, int nmonsters, int total_population, monster **monsters) {
 	region *newRegion = malloc(sizeof(region));
-	newRegion->name = name;
+	newRegion->name = strdup(name);
 	newRegion->nmonsters = nmonsters;
 	newRegion->total_population = total_population;
 	newRegion->monsters = monsters;
@@ -134,7 +172,7 @@ itinerary *new_itinerary(int nregions, region **regions, int captures) {
 // This Function will Create and Return a New Trainer from Specified Parameters.
 trainer *new_trainer(char *name, itinerary *visits) {
 	trainer *newTrainer = malloc(sizeof(trainer));
-	newTrainer->name = name;
+	newTrainer->name = strdup(name);
 	newTrainer->visits = visits;
 	return newTrainer;
 }
