@@ -3,7 +3,8 @@ name: gcc
 type: docker
 
 steps:
-        -name: gcc-build
-        image: gcc
-        commands:
-                - make
+  - name: gcc-build
+    image: gcc
+    commands:
+      - make
+
