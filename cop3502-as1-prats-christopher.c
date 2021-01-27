@@ -138,16 +138,6 @@ int get_next_nonblank_line(FILE *ifp, char *buf, int max_length) {
 	}
 }
 
-// This Function will Create and Return a New Montster from Specified Parametrs.
-monster *new_monster(int id, char *name, char *element, int population) {
-	monster *newMonster = malloc(sizeof(monster));
-	newMonster->id = id;
-	newMonster->name = strdup(name);
-	newMonster->element = strdup(element);
-	newMonster->population = population;
-	return newMonster;
-}
-
 // This Function will Calculate the Total Population of a Region
 int find_region_total_population(region *currentRegion) {
 	int total_population = 0;
@@ -158,6 +148,16 @@ int find_region_total_population(region *currentRegion) {
 		i = i + currentRegion->monsters[i]->population;
 	}
 	return total_population;
+}
+
+// This Function will Create and Return a New Montster from Specified Parametrs.
+monster *new_monster(int id, char *name, char *element, int population) {
+	monster *newMonster = malloc(sizeof(monster));
+	newMonster->id = id;
+	newMonster->name = strdup(name);
+	newMonster->element = strdup(element);
+	newMonster->population = population;
+	return newMonster;
 }
 
 // This Function will Create and Return an Array of Monsters from an Input File
