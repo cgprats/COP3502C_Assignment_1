@@ -12,15 +12,20 @@ monster *new_monster(int id, char *name, char *element, int population); //Const
 monster **new_monsters_array(FILE *ifp, int *numMonsters); //Constructor for an Array of Monsters Created from a File
 region *new_region(char *name, int nmonsters, int total_population, monster **monsters); //Constructor for Regions
 region *new_region_from_file(FILE *ifp, char *name, int nmonsters, int total_population, monster **monsters, int numMonsters); //Constructor for Regions with Information from File
+region *new_region_for_itinerary(int index, region **regionsArray); //Constructor for Regions for Use in Itinerary Constructor
 region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, int numMonsters); //Constructor for an Array of Regions Created from a File
 itinerary *new_itinerary(int nregions, region **regions, int captures); //Constructor for Itineraries
+itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region **regionsArray, int numRegions); //Constructor for Itineraries with Information from File
 trainer *new_trainer(char *name, itinerary *visits); //Constructor for Trainers
+trainer *new_trainer_from_file(FILE *ifp, char *name, int nregions,int captures, region **regionsArray, int numRegions); //Constructor for Trainers with Information from File
+trainer **new_trainers_array(FILE *ifp, int *numTrainers, region **regionsArray, int numRegions); //Constructor for an Array of Trainers Created from a File
 void dispose_monster(monster *delMonster); //Destructor for Monsters
 void dispose_monsters_array(monster **delMonstersArray, int numMonsters); //Destructor for Monsters Array
 void dispose_region(region *delRegion); //Destructor for Regions
 void dispose_regions_array(region **delRegionsArray, int numRegions);
 void dispose_itinerary(itinerary *delItinerary); //Destructor for Itineraries
 void dispose_trainer(trainer *delTrainer); //Destructor for Trainers
+void dispose_trainers_array(trainer **delTrainersArray, int numTrainers);
 
 // The Main Function
 int main() {
@@ -49,7 +54,12 @@ int main() {
 	int numRegions;
 	region **regionsArray = new_regions_array(ifp, &numRegions, monsterArray, numMonsters);
 
+	//Create the Array of Trainers
+	int numTrainers;
+	trainer **trainersArray = new_trainers_array(ifp, &numTrainers, regionsArray, numRegions);
+
 	//Dispose of Allocated Variables
+	dispose_trainers_array(trainersArray, numTrainers);
 	dispose_regions_array(regionsArray, numRegions);
 	dispose_monsters_array(monsterArray, numMonsters);
 
@@ -172,6 +182,8 @@ region *new_region(char *name, int nmonsters, int total_population, monster **mo
 	return newRegion;
 }
 
+// This Function will Create and Return a New Region from a File and Specified Parameters.
+// TODO: DEAL WITH and FIND total_population
 region *new_region_from_file(FILE *ifp, char *name, int nmonsters, int total_population, monster **monsters, int numMonsters) {
 	region *newRegion = malloc(sizeof(region));
 	newRegion->name = strdup(name);
@@ -198,6 +210,26 @@ region *new_region_from_file(FILE *ifp, char *name, int nmonsters, int total_pop
 	return newRegion;
 }
 
+// This Function will Create and Return a Region for Use in an Itinerary Constructor
+region *new_region_for_itinerary(int index, region **regionsArray) {
+	region *newRegion = malloc(sizeof(region));
+	newRegion->name = strdup(regionsArray[index]->name);
+	newRegion->nmonsters = regionsArray[index]->nmonsters;
+	newRegion->total_population = regionsArray[index]->total_population;
+	newRegion->monsters = calloc(newRegion->nmonsters, sizeof(monster *));
+
+	//Match the Data from the Regions Array to Create the Local Region's Array
+	for (int i = 0; i < newRegion->nmonsters; i++) {
+		if (regionsArray[index]->monsters[i] != NULL) {
+			newRegion->monsters[i] = new_monster(regionsArray[index]->monsters[i]->id, regionsArray[index]->monsters[i]->name, regionsArray[index]->monsters[i]->element, regionsArray[index]->monsters[i]->population);
+		}
+	}
+
+	return newRegion;
+}
+
+// This Function will Create and Return an Array of Regions from an Input File
+// TODO: See LINE 186
 region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, int numMonsters) {
 	//Get the Number of Regions
 	char buf[256];
@@ -238,6 +270,31 @@ itinerary *new_itinerary(int nregions, region **regions, int captures) {
 	return newItinerary;
 }
 
+// This Function will Create and Return a New Itinerary from a File and Specified Parameters
+itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region **regionsArray, int numRegions) {
+	itinerary *newItinerary = malloc(sizeof(itinerary));
+	newItinerary->nregions = nregions;
+	newItinerary->captures = captures;
+	newItinerary->regions = calloc(nregions, sizeof(region *));
+
+	//Create the Itinerary's Region Array
+	char tempName[256];
+	for (int i = 0; i < newItinerary->nregions; i++) {
+		//Read Region Name from File
+		get_next_nonblank_line(ifp, tempName, 255);
+		remove_crlf(tempName);
+
+		for (int j = 0; j < numRegions; j++) {
+			if (!strcmp(tempName, regionsArray[j]->name)) {
+				newItinerary->regions[i] = new_region_for_itinerary(j, regionsArray);
+			}
+		}
+	}
+
+	//Return the Newly Created Itinerary
+	return newItinerary;
+}
+
 // This Function will Create and Return a New Trainer from Specified Parameters.
 trainer *new_trainer(char *name, itinerary *visits) {
 	trainer *newTrainer = malloc(sizeof(trainer));
@@ -246,10 +303,55 @@ trainer *new_trainer(char *name, itinerary *visits) {
 	return newTrainer;
 }
 
+// This Function will Create and Return a New Trainer from a File and Specified Parameters.
+trainer *new_trainer_from_file(FILE *ifp, char *name, int nregions, int captures, region **regionsArray, int numRegions) {
+	trainer *newTrainer = malloc(sizeof(trainer));
+	newTrainer->name = strdup(name);
+	newTrainer->visits = new_itinerary_from_file(ifp, nregions, captures, regionsArray, numRegions);
+
+	// Return the Newly Created Trainer
+	return newTrainer;
+}
+
+// This Function will Create and Return an Array of Regions from an Input File
+trainer **new_trainers_array(FILE *ifp, int *numTrainers, region **regionsArray, int numRegions) {
+	//Get the Number of Trainers
+	char buf[256];
+	get_next_nonblank_line(ifp, buf, 255);
+	remove_crlf(buf);
+	*numTrainers = atoi(buf);
+
+	//Allocate the Number of Trainers with the Appropriate Size
+	trainer **newTrainersArray = calloc(*numTrainers, sizeof(trainer *));
+
+	//Initialize the Array of Trainers
+	char tempName[256];
+	int tempNumCaptures, tempNumRegions;
+	for (int i =0; i < *numTrainers; i++) {
+		//Read Trainer Name from File
+		get_next_nonblank_line(ifp, tempName, 255);
+		remove_crlf(tempName);
+
+		//Read Capture Count from File
+		get_next_nonblank_line(ifp, buf, 255);
+		remove_crlf(buf);
+		tempNumCaptures = atoi(buf);
+
+		//Read Region Count from File
+		get_next_nonblank_line(ifp, buf, 255);
+		remove_crlf(buf);
+		tempNumRegions = atoi(buf);
+
+		//Create Trainer
+		newTrainersArray[i] = new_trainer_from_file(ifp, tempName, tempNumRegions, tempNumCaptures, regionsArray, numRegions);
+	}
+
+	//Return the Newly Created Array
+	return newTrainersArray;
+}
+
 // This Function will Destroy a Monster that was Constructed.
 void dispose_monster(monster *delMonster) {
-	free(delMonster->name);
-	free(delMonster->element);
 	free(delMonster);
 }
 
@@ -265,7 +367,6 @@ void dispose_monsters_array(monster **delMonstersArray, int numMonsters) {
 
 // This Function will Destroy a Region that was Constructed.
 void dispose_region(region *delRegion) {
-	free(delRegion->name);
 	dispose_monsters_array(delRegion->monsters, delRegion->nmonsters);
 	free(delRegion);
 }
@@ -288,7 +389,16 @@ void dispose_itinerary(itinerary *delItinerary) {
 
 // This Function will Destroy a Trainer that was Constructed.
 void dispose_trainer(trainer *delTrainer) {
-	free(delTrainer->name);
 	dispose_itinerary(delTrainer->visits);
 	free(delTrainer);
+}
+
+// This Function will Destroy an Array of Traienrs that was Constructed
+void dispose_trainers_array(trainer **delTrainersArray, int numTrainers) {
+	for (int i = 0; i < numTrainers; i++) {
+		if (delTrainersArray[i] != NULL) {
+			dispose_trainer(delTrainersArray[i]);
+		}
+	}
+	free(delTrainersArray);
 }
