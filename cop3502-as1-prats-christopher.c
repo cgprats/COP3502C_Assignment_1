@@ -8,10 +8,11 @@
 // Function Constructors
 void remove_crlf(char *s); //Remove Carriage Return.
 int get_next_nonblank_line(FILE *ifp, char *buf, int max_length); //Get the Next Nonblank Line from Buffer
+int find_region_total_population(region *currentRegion); //Calculate the Total Population of a Region
 monster *new_monster(int id, char *name, char *element, int population); //Constructor for Monsters
 monster **new_monsters_array(FILE *ifp, int *numMonsters); //Constructor for an Array of Monsters Created from a File
-region *new_region(char *name, int nmonsters, int total_population, monster **monsters); //Constructor for Regions
-region *new_region_from_file(FILE *ifp, char *name, int nmonsters, int total_population, monster **monsters, int numMonsters); //Constructor for Regions with Information from File
+region *new_region(char *name, int nmonsters, monster **monsters); //Constructor for Regions
+region *new_region_from_file(FILE *ifp, char *name, int nmonsters, monster **monsters, int numMonsters); //Constructor for Regions with Information from File
 region *new_region_for_itinerary(int index, region **regionsArray); //Constructor for Regions for Use in Itinerary Constructor
 region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, int numMonsters); //Constructor for an Array of Regions Created from a File
 itinerary *new_itinerary(int nregions, region **regions, int captures); //Constructor for Itineraries
@@ -147,6 +148,18 @@ monster *new_monster(int id, char *name, char *element, int population) {
 	return newMonster;
 }
 
+// This Function will Calculate the Total Population of a Region
+int find_region_total_population(region *currentRegion) {
+	int total_population = 0;
+
+	//Traverse Through the List of Monsters
+	for (int i = 0; i < currentRegion->nmonsters; i++) {
+		//Add the Commonality of the Monster to the Total Population
+		i = i + currentRegion->monsters[i]->population;
+	}
+	return total_population;
+}
+
 // This Function will Create and Return an Array of Monsters from an Input File
 monster **new_monsters_array(FILE *ifp, int *numMonsters) {
 	//Get the Number of Monsters
@@ -180,22 +193,20 @@ monster **new_monsters_array(FILE *ifp, int *numMonsters) {
 }
 
 // This Function will Create and Return a New Region from Specified Parameters.
-region *new_region(char *name, int nmonsters, int total_population, monster **monsters) {
+region *new_region(char *name, int nmonsters, monster **monsters) {
 	region *newRegion = malloc(sizeof(region));
 	newRegion->name = strdup(name);
 	newRegion->nmonsters = nmonsters;
-	newRegion->total_population = total_population;
 	newRegion->monsters = monsters;
+	newRegion->total_population = find_region_total_population(newRegion);
 	return newRegion;
 }
 
 // This Function will Create and Return a New Region from a File and Specified Parameters.
-// TODO: DEAL WITH and FIND total_population
-region *new_region_from_file(FILE *ifp, char *name, int nmonsters, int total_population, monster **monsters, int numMonsters) {
+region *new_region_from_file(FILE *ifp, char *name, int nmonsters, monster **monsters, int numMonsters) {
 	region *newRegion = malloc(sizeof(region));
 	newRegion->name = strdup(name);
 	newRegion->nmonsters = nmonsters;
-	newRegion->total_population = total_population;
 	newRegion->monsters = calloc(newRegion->nmonsters, sizeof(monster *));
 
 	//Match the Data from the File to Create the Region's Monster Array
@@ -212,6 +223,9 @@ region *new_region_from_file(FILE *ifp, char *name, int nmonsters, int total_pop
 			}
 		}
 	}
+
+	//Calculate the Total Population of the Region
+	newRegion->total_population = find_region_total_population(newRegion);
 
 	// Return the Newly Created Region
 	return newRegion;
@@ -236,7 +250,6 @@ region *new_region_for_itinerary(int index, region **regionsArray) {
 }
 
 // This Function will Create and Return an Array of Regions from an Input File
-// TODO: See LINE 193
 region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, int numMonsters) {
 	//Get the Number of Regions
 	char buf[256];
@@ -249,7 +262,7 @@ region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, i
 
 	//Initialize the Array of Regions
 	char tempName[256];
-	int tempNMonsters, tempTotalPopulation;
+	int tempNMonsters;
 	for (int i = 0; i < *numRegions; i++) {
 		//Read Region Name from File
 		get_next_nonblank_line(ifp, tempName, 255);
@@ -261,7 +274,7 @@ region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, i
 		tempNMonsters = atoi(buf);
 
 		//Create Region
-		newRegionsArray[i] = new_region_from_file(ifp, tempName, tempNMonsters, tempTotalPopulation, monsterArray, numMonsters);
+		newRegionsArray[i] = new_region_from_file(ifp, tempName, tempNMonsters, monsterArray, numMonsters);
 	}
 
 	//Return the Newly Created Array
