@@ -15,13 +15,10 @@ void calculate_captures_output(FILE *ofp, trainer **trainersArray, int numTraine
 // Constructor Prototypes
 monster *new_monster(int id, char *name, char *element, int population); //Constructor for Monsters
 monster **new_monsters_array(FILE *ifp, int *numMonsters); //Constructor for an Array of Monsters Created from a File
-//region *new_region(char *name, int nmonsters, monster **monsters); //Constructor for Regions
 region *new_region_from_file(FILE *ifp, char *name, int nmonsters, monster **monsters, int numMonsters); //Constructor for Regions with Information from File
 region *new_region_for_itinerary(int index, region **regionsArray); //Constructor for Regions for Use in Itinerary Constructor
 region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, int numMonsters); //Constructor for an Array of Regions Created from a File
-//itinerary *new_itinerary(int nregions, region **regions, int captures); //Constructor for Itineraries
 itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region **regionsArray, int numRegions); //Constructor for Itineraries with Information from File
-//trainer *new_trainer(char *name, itinerary *visits); //Constructor for Trainers
 trainer *new_trainer_from_file(FILE *ifp, char *name, int nregions,int captures, region **regionsArray, int numRegions); //Constructor for Trainers with Information from File
 trainer **new_trainers_array(FILE *ifp, int *numTrainers, region **regionsArray, int numRegions); //Constructor for an Array of Trainers Created from a File
 
@@ -241,17 +238,6 @@ monster **new_monsters_array(FILE *ifp, int *numMonsters) {
 	return newMonsterArray;
 }
 
-// This Function will Create and Return a New Region from Specified Parameters.
-/*
-region *new_region(char *name, int nmonsters, monster **monsters) {
-	region *newRegion = malloc(sizeof(region));
-	newRegion->name = strdup(name);
-	newRegion->nmonsters = nmonsters;
-	newRegion->monsters = monsters;
-	newRegion->total_population = find_region_total_population(newRegion);
-	return newRegion;
-}*/
-
 // This Function will Create and Return a New Region from a File and Specified Parameters.
 region *new_region_from_file(FILE *ifp, char *name, int nmonsters, monster **monsters, int numMonsters) {
 	region *newRegion = malloc(sizeof(region));
@@ -331,16 +317,6 @@ region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, i
 	return newRegionsArray;
 }
 
-// This Function will Create and Return a New Itinerary from Specified Parameters.
-/*
-itinerary *new_itinerary(int nregions, region **regions, int captures) {
-	itinerary *newItinerary = malloc(sizeof(itinerary));
-	newItinerary->nregions = nregions;
-	newItinerary->regions = regions;
-	newItinerary->captures = captures;
-	return newItinerary;
-}*/
-
 // This Function will Create and Return a New Itinerary from a File and Specified Parameters
 itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region **regionsArray, int numRegions) {
 	itinerary *newItinerary = malloc(sizeof(itinerary));
@@ -365,15 +341,6 @@ itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region
 	//Return the Newly Created Itinerary
 	return newItinerary;
 }
-
-// This Function will Create and Return a New Trainer from Specified Parameters.
-/*
-trainer *new_trainer(char *name, itinerary *visits) {
-	trainer *newTrainer = malloc(sizeof(trainer));
-	newTrainer->name = strdup(name);
-	newTrainer->visits = visits;
-	return newTrainer;
-}*/
 
 // This Function will Create and Return a New Trainer from a File and Specified Parameters.
 trainer *new_trainer_from_file(FILE *ifp, char *name, int nregions, int captures, region **regionsArray, int numRegions) {
