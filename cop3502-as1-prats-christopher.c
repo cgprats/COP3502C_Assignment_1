@@ -138,7 +138,7 @@ int get_next_nonblank_line(FILE *ifp, char *buf, int max_length) {
 int find_region_total_population(region *currentRegion) {
 	int total_population = 0;
 
-	//Traverse Through the List of Monsters
+	//Transverse Through the List of Monsters
 	for (int i = 0; i < currentRegion->nmonsters; i++) {
 		//Add the Commonality of the Monster to the Total Population
 		total_population += currentRegion->monsters[i]->population;
@@ -164,17 +164,17 @@ int calculate_captures(int monsterPopulation, int regionPopulation, int intended
 // This Function will Calculate the Output for Each Trainer
 void calculate_captures_output(FILE *ofp, trainer **trainersArray, int numTrainers) {
 	int tempCaptures;
-	//Traverse Through the Trainers
+	//Transverse Through the Trainers
 	for (int i = 0; i < numTrainers; i++) {
 		//Output the Current Trainer's Name
 		fprintf(ofp, "%s\n", trainersArray[i]->name);
 
-		//Traverse Through the Regions
+		//Transverse Through the Regions
 		for (int j = 0; j < trainersArray[i]->visits->nregions; j++) {
 			//Output the Current Region's Name
 			fprintf(ofp, "%s\n", trainersArray[i]->visits->regions[j]->name);
 
-			//Traverse Through the Monsters
+			//Transverse Through the Monsters
 			for (int k = 0; k < trainersArray[i]->visits->regions[j]->nmonsters; k++) {
 				// Determine the Number of Captures
 				tempCaptures = calculate_captures(trainersArray[i]->visits->regions[j]->monsters[k]->population, trainersArray[i]->visits->regions[j]->total_population, trainersArray[i]->visits->captures);
