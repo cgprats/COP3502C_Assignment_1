@@ -5,21 +5,27 @@
 #include "sp21_cop3502_as1.h"
 #include "leak_detector_c.h"
 
-// Function Constructors
+// Function Prototypes
 void remove_crlf(char *s); //Remove Carriage Return.
 int get_next_nonblank_line(FILE *ifp, char *buf, int max_length); //Get the Next Nonblank Line from Buffer
 int find_region_total_population(region *currentRegion); //Calculate the Total Population of a Region
+int calculate_captures(int monsterPopulation, int regionPopulation, int intendedCaptures); //Calculate the Amount of Captures of a Monster in a Region
+void calculate_captures_output(FILE *ofp, trainer **trainersArray, int numTrainers); //Calculate the Output for the Trainer's Captures
+
+// Constructor Prototypes
 monster *new_monster(int id, char *name, char *element, int population); //Constructor for Monsters
 monster **new_monsters_array(FILE *ifp, int *numMonsters); //Constructor for an Array of Monsters Created from a File
-region *new_region(char *name, int nmonsters, monster **monsters); //Constructor for Regions
+//region *new_region(char *name, int nmonsters, monster **monsters); //Constructor for Regions
 region *new_region_from_file(FILE *ifp, char *name, int nmonsters, monster **monsters, int numMonsters); //Constructor for Regions with Information from File
 region *new_region_for_itinerary(int index, region **regionsArray); //Constructor for Regions for Use in Itinerary Constructor
 region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, int numMonsters); //Constructor for an Array of Regions Created from a File
-itinerary *new_itinerary(int nregions, region **regions, int captures); //Constructor for Itineraries
+//itinerary *new_itinerary(int nregions, region **regions, int captures); //Constructor for Itineraries
 itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region **regionsArray, int numRegions); //Constructor for Itineraries with Information from File
-trainer *new_trainer(char *name, itinerary *visits); //Constructor for Trainers
+//trainer *new_trainer(char *name, itinerary *visits); //Constructor for Trainers
 trainer *new_trainer_from_file(FILE *ifp, char *name, int nregions,int captures, region **regionsArray, int numRegions); //Constructor for Trainers with Information from File
 trainer **new_trainers_array(FILE *ifp, int *numTrainers, region **regionsArray, int numRegions); //Constructor for an Array of Trainers Created from a File
+
+// Destructor Prototypes
 void dispose_monster(monster *delMonster); //Destructor for Monsters
 void dispose_monsters_array(monster **delMonstersArray, int numMonsters); //Destructor for Monsters Array
 void dispose_region(region *delRegion); //Destructor for Regions
@@ -34,18 +40,8 @@ int main() {
 	atexit(report_mem_leak);
 
 	//Set the Input File to ifp and the Output File to ofp. If There is an Error, Print It.
-	FILE *ifp, *ofp;
-	if ((ifp = fopen("cop3502-as1-input.txt", "r")) == NULL) {
-		fclose(ifp);
-		printf("Error: Opening Input File Failed!");
-		return 1;
-	}
-	if ((ofp = fopen("cop3502-as1-output-prats-christopher.txt", "w")) == NULL) {
-		fclose(ifp);
-		fclose(ofp);
-		printf("Error: Opening Output File Failed!");
-		return 1;
-	}
+	FILE *ifp = fopen("cop3502-as1-input.txt", "r");
+	FILE *ofp = fopen("cop3502-as1-output-prats-christopher.txt", "w");
 
 	//Create the Array of Monsters
 	int numMonsters;
@@ -58,6 +54,9 @@ int main() {
 	//Create the Array of Trainers
 	int numTrainers;
 	trainer **trainersArray = new_trainers_array(ifp, &numTrainers, regionsArray, numRegions);
+
+	//Calculate the Captures for Each Trainer
+	calculate_captures_output(ofp, trainersArray, numTrainers);
 
 	//Dispose of Allocated Variables
 	dispose_trainers_array(trainersArray, numTrainers);
@@ -145,10 +144,60 @@ int find_region_total_population(region *currentRegion) {
 	//Traverse Through the List of Monsters
 	for (int i = 0; i < currentRegion->nmonsters; i++) {
 		//Add the Commonality of the Monster to the Total Population
-		i = i + currentRegion->monsters[i]->population;
+		total_population = total_population + currentRegion->monsters[i]->population;
 	}
+	//Return the Total Population
 	return total_population;
 }
+
+// This Function Calculates the Amount of Captures of a Monster in a Region and Returns the Value
+int calculate_captures(int monsterPopulation, int regionPopulation, int intendedCaptures) {
+	double temp;
+	int numCaptures = 0;
+
+	//Perform the Calculation Algorithm
+	temp = (double) monsterPopulation / (double) regionPopulation;
+	temp *= intendedCaptures;
+	numCaptures = round(temp);
+
+	//Return the Number of Captures
+	return numCaptures;
+}
+
+// This Function will Calculate the Output for Each Trainer
+void calculate_captures_output(FILE *ofp, trainer **trainersArray, int numTrainers) {
+	int tempCaptures;
+	//Traverse Through the Trainers
+	for (int i = 0; i < numTrainers; i++) {
+		//Output the Current Trainer's Name
+		fprintf(ofp, "%s\n", trainersArray[i]->name);
+
+		//Traverse Through the Regions
+		for (int j = 0; j < trainersArray[i]->visits->nregions; j++) {
+			//Output the Current Region's Name
+			fprintf(ofp, "%s\n", trainersArray[i]->visits->regions[j]->name);
+
+			//Traverse Through the Monsters
+			for (int k = 0; k < trainersArray[i]->visits->regions[j]->nmonsters; k++) {
+				// Determine the Number of Captures
+				tempCaptures = calculate_captures(trainersArray[i]->visits->regions[j]->monsters[k]->population, trainersArray[i]->visits->regions[j]->total_population, trainersArray[i]->visits->captures);
+
+				//Output the Current Monster's Name and Number of Captures if it is NOT 0
+				if (tempCaptures != 0) {
+					fprintf(ofp, "%d %s\n", tempCaptures, trainersArray[i]->visits->regions[j]->monsters[k]->name);
+				}
+			}
+		}
+
+		//Output an Empty Line to Separate Trainers
+		fprintf(ofp, "\n");
+	}
+}
+
+/*
+ * This section includes the functions for Constructing the various
+ * objects used in this program.
+ */
 
 // This Function will Create and Return a New Montster from Specified Parametrs.
 monster *new_monster(int id, char *name, char *element, int population) {
@@ -193,6 +242,7 @@ monster **new_monsters_array(FILE *ifp, int *numMonsters) {
 }
 
 // This Function will Create and Return a New Region from Specified Parameters.
+/*
 region *new_region(char *name, int nmonsters, monster **monsters) {
 	region *newRegion = malloc(sizeof(region));
 	newRegion->name = strdup(name);
@@ -200,7 +250,7 @@ region *new_region(char *name, int nmonsters, monster **monsters) {
 	newRegion->monsters = monsters;
 	newRegion->total_population = find_region_total_population(newRegion);
 	return newRegion;
-}
+}*/
 
 // This Function will Create and Return a New Region from a File and Specified Parameters.
 region *new_region_from_file(FILE *ifp, char *name, int nmonsters, monster **monsters, int numMonsters) {
@@ -282,13 +332,14 @@ region **new_regions_array(FILE *ifp, int *numRegions, monster **monsterArray, i
 }
 
 // This Function will Create and Return a New Itinerary from Specified Parameters.
+/*
 itinerary *new_itinerary(int nregions, region **regions, int captures) {
 	itinerary *newItinerary = malloc(sizeof(itinerary));
 	newItinerary->nregions = nregions;
 	newItinerary->regions = regions;
 	newItinerary->captures = captures;
 	return newItinerary;
-}
+}*/
 
 // This Function will Create and Return a New Itinerary from a File and Specified Parameters
 itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region **regionsArray, int numRegions) {
@@ -316,12 +367,13 @@ itinerary *new_itinerary_from_file(FILE *ifp, int nregions, int captures, region
 }
 
 // This Function will Create and Return a New Trainer from Specified Parameters.
+/*
 trainer *new_trainer(char *name, itinerary *visits) {
 	trainer *newTrainer = malloc(sizeof(trainer));
 	newTrainer->name = strdup(name);
 	newTrainer->visits = visits;
 	return newTrainer;
-}
+}*/
 
 // This Function will Create and Return a New Trainer from a File and Specified Parameters.
 trainer *new_trainer_from_file(FILE *ifp, char *name, int nregions, int captures, region **regionsArray, int numRegions) {
@@ -369,6 +421,11 @@ trainer **new_trainers_array(FILE *ifp, int *numTrainers, region **regionsArray,
 	//Return the Newly Created Array
 	return newTrainersArray;
 }
+
+/*
+ * This section includes the functions for Destroying the various
+ * objects used in this program.
+ */
 
 // This Function will Destroy a Monster that was Constructed.
 void dispose_monster(monster *delMonster) {
