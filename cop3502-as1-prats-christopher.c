@@ -141,7 +141,7 @@ int find_region_total_population(region *currentRegion) {
 	//Traverse Through the List of Monsters
 	for (int i = 0; i < currentRegion->nmonsters; i++) {
 		//Add the Commonality of the Monster to the Total Population
-		total_population = total_population + currentRegion->monsters[i]->population;
+		total_population += currentRegion->monsters[i]->population;
 	}
 	//Return the Total Population
 	return total_population;
